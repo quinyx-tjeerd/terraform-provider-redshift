@@ -3,6 +3,7 @@ package redshift
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -34,8 +35,14 @@ func (c *Config) Client() (*Client, error) {
 		c.database)
 
 	db, err := sql.Open("postgres", conninfo)
+	const fName = "redshift/config.go Client()"
 	if err != nil {
-		db.Close()
+		log.Printf("Error in %v: %v", fName, err)
+		err1 := db.Close()
+		if err1 != nil {
+			log.Printf("Error in %v: %v", fName, err)
+			return nil, err1
+		}
 		return nil, err
 	}
 
