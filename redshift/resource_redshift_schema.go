@@ -197,7 +197,11 @@ func resourceRedshiftSchemaUpdate(d *schema.ResourceData, meta interface{}) erro
 	err := readRedshiftSchema(d, redshiftClient)
 
 	if err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 

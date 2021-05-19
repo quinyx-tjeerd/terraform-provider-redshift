@@ -120,26 +120,42 @@ func resourceRedshiftSchemaGroupPrivilegeCreate(d *schema.ResourceData, meta int
 	schemaGrants := validateSchemaGrants(d)
 
 	if len(grants) == 0 && len(schemaGrants) == 0 {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return NewError("Must have at least 1 privilege")
 	}
 
 	schemaName, schemaOwner, schemaErr := GetSchemaInfoForSchemaId(tx, d.Get("schema_id").(int))
 	if schemaErr != nil {
 		log.Print(schemaErr)
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return schemaErr
 	}
 
 	if isSystemSchema(schemaOwner) {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return NewError("Privilege creation is not allowed for system schemas, schema=" + schemaName)
 	}
 
 	groupName, groupErr := GetGroupNameForGroupId(tx, d.Get("group_id").(int))
 	if groupErr != nil {
 		log.Print(groupErr)
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return groupErr
 	}
 
@@ -148,14 +164,22 @@ func resourceRedshiftSchemaGroupPrivilegeCreate(d *schema.ResourceData, meta int
 
 		if _, err := tx.Exec(grantPrivilegeStatement); err != nil {
 			log.Print(err)
-			tx.Rollback()
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				log.Printf("Error rolling back transaction: %v", rollbackErr)
+				return rollbackErr
+			}
 			return err
 		}
 
 		var defaultPrivilegesStatement = "ALTER DEFAULT PRIVILEGES IN SCHEMA " + schemaName + " GRANT " + strings.Join(grants[:], ",") + " ON TABLES TO GROUP " + groupName
 		if _, err := tx.Exec(defaultPrivilegesStatement); err != nil {
 			log.Print(err)
-			tx.Rollback()
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				log.Printf("Error rolling back transaction: %v", rollbackErr)
+				return rollbackErr
+			}
 			return err
 		}
 	}
@@ -164,7 +188,11 @@ func resourceRedshiftSchemaGroupPrivilegeCreate(d *schema.ResourceData, meta int
 		var grantPrivilegeSchemaStatement = "GRANT " + strings.Join(schemaGrants[:], ",") + " ON SCHEMA " + schemaName + " TO GROUP " + groupName
 		if _, err := tx.Exec(grantPrivilegeSchemaStatement); err != nil {
 			log.Print(err)
-			tx.Rollback()
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				log.Printf("Error rolling back transaction: %v", rollbackErr)
+				return rollbackErr
+			}
 			return err
 		}
 	}
@@ -174,7 +202,11 @@ func resourceRedshiftSchemaGroupPrivilegeCreate(d *schema.ResourceData, meta int
 	readErr := readRedshiftSchemaGroupPrivilege(d, tx)
 
 	if readErr != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return readErr
 	}
 
@@ -198,7 +230,11 @@ func resourceRedshiftSchemaGroupPrivilegeRead(d *schema.ResourceData, meta inter
 	err := readRedshiftSchemaGroupPrivilege(d, tx)
 
 	if err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 
@@ -238,7 +274,11 @@ func readRedshiftSchemaGroupPrivilege(d *schema.ResourceData, tx *sql.Tx) error 
 	privilegesError := tx.QueryRow(hasPrivilegeQuery, d.Get("schema_id").(int), d.Get("group_id").(int)).Scan(&selectPrivilege, &updatePrivilege, &insertPrivilege, &deletePrivilege, &referencesPrivilege)
 
 	if privilegesError != nil && privilegesError != sql.ErrNoRows {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return privilegesError
 	}
 
@@ -260,7 +300,11 @@ func readRedshiftSchemaGroupPrivilege(d *schema.ResourceData, tx *sql.Tx) error 
 	schemaPrivilegesError := tx.QueryRow(hasSchemaPrivilegeQuery, d.Get("schema_id").(int), d.Get("group_id").(int)).Scan(&usagePrivilege, &createPrivilege)
 
 	if schemaPrivilegesError != nil && schemaPrivilegesError != sql.ErrNoRows {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return schemaPrivilegesError
 	}
 
@@ -287,51 +331,91 @@ func resourceRedshiftSchemaGroupPrivilegeUpdate(d *schema.ResourceData, meta int
 	schemaGrants := validateSchemaGrants(d)
 
 	if len(grants) == 0 && len(schemaGrants) == 0 {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return NewError("Must have at least 1 privilege")
 	}
 
 	schemaName, _, schemaErr := GetSchemaInfoForSchemaId(tx, d.Get("schema_id").(int))
 	if schemaErr != nil {
 		log.Print(schemaErr)
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return schemaErr
 	}
 
 	groupName, groupErr := GetGroupNameForGroupId(tx, d.Get("group_id").(int))
 	if groupErr != nil {
 		log.Print(groupErr)
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return groupErr
 	}
 
 	//Would be much nicer to do this with zip if possible
 	if err := updatePrivilege(tx, d, "select", "SELECT", schemaName, groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 	if err := updatePrivilege(tx, d, "insert", "INSERT", schemaName, groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 	if err := updatePrivilege(tx, d, "update", "UPDATE", schemaName, groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 	if err := updatePrivilege(tx, d, "delete", "DELETE", schemaName, groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 	if err := updatePrivilege(tx, d, "references", "REFERENCES", schemaName, groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 	if err := updateSchemaPrivilege(tx, d, "usage", "USAGE", schemaName, groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 	if err := updateSchemaPrivilege(tx, d, "create", "CREATE", schemaName, groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 
@@ -356,29 +440,49 @@ func resourceRedshiftSchemaGroupPrivilegeDelete(d *schema.ResourceData, meta int
 	schemaName, _, schemaErr := GetSchemaInfoForSchemaId(tx, d.Get("schema_id").(int))
 	if schemaErr != nil {
 		log.Print(schemaErr)
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return schemaErr
 	}
 
 	groupName, groupErr := GetGroupNameForGroupId(tx, d.Get("group_id").(int))
 	if groupErr != nil {
 		log.Print(groupErr)
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return groupErr
 	}
 
 	if _, err := tx.Exec("REVOKE ALL ON  ALL TABLES IN SCHEMA " + schemaName + " FROM GROUP " + groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 
 	if _, err := tx.Exec("ALTER DEFAULT PRIVILEGES IN SCHEMA " + schemaName + " REVOKE ALL ON TABLES FROM GROUP " + groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 
 	if _, err := tx.Exec("REVOKE ALL ON SCHEMA " + schemaName + " FROM GROUP " + groupName); err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 

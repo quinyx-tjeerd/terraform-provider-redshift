@@ -157,7 +157,11 @@ func resourceRedshiftUserCreate(d *schema.ResourceData, meta interface{}) error 
 	readErr := readRedshiftUser(d, tx)
 
 	if readErr != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return readErr
 	}
 
@@ -183,7 +187,11 @@ func resourceRedshiftUserRead(d *schema.ResourceData, meta interface{}) error {
 	err := readRedshiftUser(d, tx)
 
 	if err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 
@@ -308,7 +316,11 @@ func resourceRedshiftUserUpdate(d *schema.ResourceData, meta interface{}) error 
 	err := readRedshiftUser(d, tx)
 
 	if err != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return err
 	}
 
@@ -410,7 +422,11 @@ func resourceRedshiftUserDelete(d *schema.ResourceData, meta interface{}) error 
 	defer rows.Close()
 
 	if reassignOwnerStatementErr != nil {
-		tx.Rollback()
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			log.Printf("Error rolling back transaction: %v", rollbackErr)
+			return rollbackErr
+		}
 		return reassignOwnerStatementErr
 	}
 
@@ -423,7 +439,11 @@ func resourceRedshiftUserDelete(d *schema.ResourceData, meta interface{}) error 
 		err := rows.Scan(&reassignStatement)
 		if err != nil {
 			//Im not sure how this can happen
-			tx.Rollback()
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				log.Printf("Error rolling back transaction: %v", rollbackErr)
+				return rollbackErr
+			}
 			return err
 		}
 		reassignStatements = append(reassignStatements, reassignStatement)
@@ -434,7 +454,11 @@ func resourceRedshiftUserDelete(d *schema.ResourceData, meta interface{}) error 
 
 		if err != nil {
 			//Im not sure how this can happen
-			tx.Rollback()
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				log.Printf("Error rolling back transaction: %v", rollbackErr)
+				return rollbackErr
+			}
 			return err
 		}
 	}
