@@ -460,8 +460,11 @@ func resourceRedshiftUserDelete(d *schema.ResourceData, meta interface{}) error 
 	_, dropUserErr := tx.Exec("DROP USER " + d.Get("username").(string))
 
 	if dropUserErr != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Printf("drop user failed; unable to rollback: %v", rollbackErr)
+		}
+		log.Print(dropUserErr)
 		return dropUserErr
-		tx.Rollback()
 	}
 
 	commitErr := tx.Commit()
