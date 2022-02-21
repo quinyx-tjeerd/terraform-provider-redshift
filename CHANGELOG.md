@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2.0.1
+
+ - Switch ignore to list instead of map (Cooper Gillan)
+
+
 ## 2.0.0
 
  - Bump to version 2.0.0 (Cooper Gillan)

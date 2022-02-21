@@ -1,6 +1,6 @@
 # Terraform Redshift Provider
 
-![Build Status](https://github.com/coopergillan/terraform-provider-redshift/actions/workflows/go.yml/badge.svg)
+![Build Status](https://github.com/quinyx-tjeerd/terraform-provider-redshift/actions/workflows/go.yml/badge.svg)
 
 Manage Redshift users, groups, privileges, databases and schemas. It runs the
 SQL queries necessary to manage these (CREATE USER, DELETE DATABASE etc) in
@@ -29,6 +29,7 @@ This module supports terraform version >0.12 for Redshift versions >1.0.14677.
 ## Legacy download links (0.0.2)
 
 See [original fork](https://github.com/frankfarrell/terraform-provider-redshift) for older download links
+See [original fork](https://github.com/cooperfillan/terraform-provider-redshift) for older download links
 
 ## Examples:
 
@@ -213,7 +214,7 @@ git push origin $(cat VERSION)
 
 This will start a Github Actions workflow defined in `.github/workflows/release.yml`
 that will generate the binaries and create the release. Releases will be automatically
-published [to the Terraform registry](https://registry.terraform.io/providers/coopergillan/redshift/latest).
+published [to the Terraform registry](https://registry.terraform.io/providers/quinyx-tjeerd/redshift/latest).
 
 ## TODO
 
@@ -222,5 +223,5 @@ published [to the Terraform registry](https://registry.terraform.io/providers/co
 3. Add privileges for languages and functions
 
 [installing_plugin]: https://www.terraform.io/docs/extend/how-terraform-works.html#implied-local-mirror-directories
-[releases]: https://github.com/coopergillan/terraform-provider-redshift/releases
+[releases]: https://github.com/quinyx-tjeerd/terraform-provider-redshift/releases
 [redshift-schema-parameters]: https://docs.aws.amazon.com/redshift/latest/dg/r_CREATE_SCHEMA.html#r_CREATE_SCHEMA-parameters
