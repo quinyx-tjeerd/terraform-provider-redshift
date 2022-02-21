@@ -124,17 +124,19 @@ func resourceRedshiftSchemaGroupPrivilegeCreate(d *schema.ResourceData, meta int
 		return NewError("Must have at least 1 privilege")
 	}
 
-	schemaName, schemaOwner, schemaErr := GetSchemaInfoForSchemaId(tx, d.Get("schema_id").(int))
+	// schemaName, schemaOwner, schemaErr := GetSchemaInfoForSchemaId(tx, d.Get("schema_id").(int))
+	schemaName, _, schemaErr := GetSchemaInfoForSchemaId(tx, d.Get("schema_id").(int))
 	if schemaErr != nil {
 		log.Print(schemaErr)
 		tx.Rollback()
 		return schemaErr
 	}
 
-	if isSystemSchema(schemaOwner) {
-		tx.Rollback()
-		return NewError("Privilege creation is not allowed for system schemas, schema=" + schemaName)
-	}
+	// We do want to allow this
+	// if isSystemSchema(schemaOwner) {
+	// 	tx.Rollback()
+	// 	return NewError("Privilege creation is not allowed for system schemas, schema=" + schemaName)
+	// }
 
 	groupName, groupErr := GetGroupNameForGroupId(tx, d.Get("group_id").(int))
 	if groupErr != nil {
